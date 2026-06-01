@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.jino.ru")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "voting@devapi.ru")
+SMTP_USER = os.getenv("SMTP_USER", "voting@jino.ru")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 
 def send_voting_link(email: str, voting_id: int, user_token: str, base_url: str):
