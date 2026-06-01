@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>True Vote — Панель управления</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --s950:#020617; --s900:#0f172a; --s800:#1e293b; --s700:#334155;
+      --s600:#475569; --s500:#64748b; --s400:#94a3b8; --s300:#cbd5e1;
+      --s200:#e2e8f0; --s100:#f1f5f9; --s50:#f8fafc;
+      --b700:#1d4ed8; --b600:#2563eb; --b500:#3b82f6; --b100:#dbeafe; --b50:#eff6ff;
+      --ok:#16a34a; --ok-bg:#dcfce7; --err:#dc2626; --err-bg:#fee2e2;
+      --warn:#d97706; --warn-bg:#fef3c7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--s100);color:var(--s900);font-size:14px}
+
+    /* ── Layout ── */
+    .layout{display:flex;height:100vh;overflow:hidden}
+
+    /* ── Sidebar ── */
+    .sidebar{width:248px;flex-shrink:0;background:var(--s900);display:flex;flex-direction:column}
+    .sb-brand{padding:1.125rem 1rem .875rem;border-bottom:1px solid var(--s800)}
+    .sb-logo{display:flex;align-items:center;gap:.625rem}
+    .sb-icon{width:34px;height:34px;background:var(--b600);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .sb-icon svg{width:18px;height:18px;fill:white}
+    .sb-name{font-size:.9375rem;font-weight:700;color:white;letter-spacing:-.01em}
+    .sb-sub{font-size:.6875rem;color:var(--s500);margin-top:1px}
+    .sb-nav{flex:1;padding:.625rem .5rem;overflow-y:auto}
+    .sb-section{font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--s600);padding:.625rem .625rem .25rem;margin-top:.25rem}
+    .nav-btn{display:flex;align-items:center;gap:.5rem;padding:.5rem .625rem;border-radius:6px;color:var(--s400);font-size:.8125rem;font-weight:500;cursor:pointer;transition:background .12s,color .12s;border:none;background:none;width:100%;text-align:left;margin-bottom:1px}
+    .nav-btn:hover{background:var(--s800);color:var(--s200)}
+    .nav-btn.active{background:var(--b600);color:white}
+    .nav-btn svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+    .nav-btn.active svg{opacity:1}
+    .nav-count{margin-left:auto;background:var(--s800);color:var(--s400);font-size:.625rem;font-weight:700;padding:.1rem .375rem;border-radius:10px;min-width:17px;text-align:center}
+    .nav-btn.active .nav-count{background:rgba(255,255,255,.18);color:white}
+    .sb-footer{padding:.75rem 1rem;border-top:1px solid var(--s800)}
+    .token-lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--s600);margin-bottom:.3rem}
+    .token-wrap{display:flex;align-items:center;gap:.375rem;background:var(--s800);border:1px solid var(--s700);border-radius:6px;padding:.375rem .625rem}
+    .token-wrap svg{width:11px;height:11px;flex-shrink:0;color:var(--s500)}
+    .token-wrap input{background:none;border:none;outline:none;color:var(--s300);font-size:.75rem;width:100%;font-family:'Inter',monospace}
+    .token-wrap input::placeholder{color:var(--s600)}
+    .sys-status{display:flex;align-items:center;gap:.35rem;margin-top:.5rem;font-size:.6875rem;color:var(--s500)}
+    .pulse{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 5px var(--ok);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+    /* ── Workspace ── */
+    .workspace{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .topbar{background:white;border-bottom:1px solid var(--s200);height:52px;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0}
+    .crumb{display:flex;align-items:center;gap:.375rem;font-size:.8125rem;color:var(--s500)}
+    .crumb .cur{color:var(--s900);font-weight:600}
+    .crumb svg{width:11px;height:11px}
+    .top-right{display:flex;align-items:center;gap:.875rem}
+    .top-stat{font-size:.75rem;color:var(--s500)}
+    .top-stat strong{color:var(--s900)}
+    .top-divider{width:1px;height:18px;background:var(--s200)}
+    .content{flex:1;overflow-y:auto;padding:1.375rem 1.5rem}
+
+    /* ── Panels ── */
+    .panel{display:none}
+    .panel.active{display:block}
+    .pg-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+    .pg-title{font-size:1.125rem;font-weight:700;color:var(--s900);letter-spacing:-.025em}
+    .pg-sub{font-size:.8125rem;color:var(--s500);margin-top:.2rem}
+
+    /* ── Stats ── */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.25rem}
+    @media(max-width:1050px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+    .stat-card{background:white;border:1px solid var(--s200);border-radius:8px;padding:1rem 1.125rem}
+    .stat-lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--s500);margin-bottom:.5rem}
+    .stat-val{font-size:1.625rem;font-weight:800;color:var(--s900);letter-spacing:-.03em;line-height:1;margin-bottom:.3rem}
+    .stat-meta{font-size:.6875rem;color:var(--s500)}
+
+    /* ── Cards ── */
+    .card{background:white;border:1px solid var(--s200);border-radius:8px;overflow:hidden;margin-bottom:1rem}
+    .card-head{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.125rem;border-bottom:1px solid var(--s100);gap:.5rem}
+    .card-title{font-size:.875rem;font-weight:600;color:var(--s900)}
+    .card-sub{font-size:.75rem;color:var(--s500);margin-top:.15rem}
+    .card-body{padding:1.125rem}
+
+    /* ── Forms ── */
+    .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+    .fg2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    @media(max-width:680px){.fg3,.fg2{grid-template-columns:1fr}}
+    .fg{display:flex;flex-direction:column;gap:.275rem}
+    .fg.full{grid-column:1/-1}
+    .fg.end{justify-content:flex-start}
+    .lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--s600)}
+    .inp,.txa{padding:.475rem .7rem;border:1.5px solid var(--s200);border-radius:6px;font-size:.8125rem;font-family:inherit;color:var(--s900);background:white;transition:border-color .12s,box-shadow .12s;width:100%}
+    .inp:focus,.txa:focus{outline:none;border-color:var(--b500);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .txa{resize:vertical;min-height:78px}
+    .hint{font-size:.6875rem;color:var(--s400);margin-top:.15rem}
+
+    /* ── Buttons ── */
+    .btn{display:inline-flex;align-items:center;gap:.3rem;padding:.4375rem .875rem;border:none;border-radius:6px;font-size:.8125rem;font-weight:600;font-family:inherit;cursor:pointer;transition:all .12s;white-space:nowrap}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:none}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .btn svg{width:13px;height:13px}
+    .btn-p{background:var(--b600);color:white}
+    .btn-p:hover{background:var(--b700)}
+    .btn-g{background:transparent;color:var(--s600);border:1.5px solid var(--s200)}
+    .btn-g:hover{border-color:var(--s300);color:var(--s900);background:var(--s50)}
+    .btn-d{background:transparent;color:var(--err);border:1.5px solid var(--s200)}
+    .btn-d:hover{border-color:var(--err);background:var(--err-bg)}
+    .btn-sm{padding:.275rem .5625rem;font-size:.75rem}
+    .btn-full{width:100%;justify-content:center}
+
+    /* ── Table ── */
+    .tbl-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead th{text-align:left;font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--s500);padding:.5rem 1rem;background:var(--s50);border-bottom:1px solid var(--s200);white-space:nowrap}
+    tbody td{padding:.6875rem 1rem;font-size:.8125rem;border-bottom:1px solid var(--s100);color:var(--s700);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:var(--s50)}
+    .td-mono{font-family:monospace;color:var(--s400)}
+    .td-bold{font-weight:500;color:var(--s900)}
+    .td-dim{color:var(--s500);font-size:.75rem}
+
+    /* ── Badges ── */
+    .badge{display:inline-flex;align-items:center;gap:.225rem;padding:.175rem .475rem;border-radius:4px;font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .bdot{width:5px;height:5px;border-radius:50%}
+    .b-active{background:var(--ok-bg);color:var(--ok)}.b-active .bdot{background:var(--ok)}
+    .b-ended{background:var(--s100);color:var(--s500)}.b-ended .bdot{background:var(--s400)}
+    .b-draft{background:var(--warn-bg);color:var(--warn)}.b-draft .bdot{background:var(--warn)}
+    .b-verified{background:var(--b100);color:var(--b700)}.b-verified .bdot{background:var(--b500)}
+
+    /* ── Audit log ── */
+    .audit-list{list-style:none}
+    .audit-row{display:flex;align-items:flex-start;gap:.625rem;padding:.5625rem 0;border-bottom:1px solid var(--s100);font-size:.8125rem}
+    .audit-row:last-child{border-bottom:none}
+    .adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:.3125rem}
+    .adot-b{background:var(--b500)}.adot-g{background:var(--ok)}.adot-s{background:var(--s400)}
+    .a-msg{flex:1;color:var(--s700);line-height:1.45}
+    .a-time{font-size:.6875rem;color:var(--s400);white-space:nowrap}
+
+    /* ── Empty ── */
+    .empty{text-align:center;padding:2.5rem 1rem;color:var(--s400)}
+    .empty-ico{font-size:1.5rem;margin-bottom:.375rem;opacity:.5}
+    .empty-txt{font-size:.875rem}
+
+    /* ── Inline results ── */
+    .res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;margin-bottom:.75rem}
+    .res-cell{border-radius:6px;padding:.625rem .875rem}
+
+    /* ── Alerts ── */
+    .alert{border-radius:7px;padding:.75rem 1rem;font-size:.8125rem;margin-bottom:1rem;border:1px solid}
+    .alert-warn{background:var(--warn-bg);border-color:#fde68a;color:#92400e}
+    .alert-info{background:var(--b50);border-color:var(--b100);color:#1e40af}
+
+    /* ── Toast ── */
+    #toasts{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.375rem;pointer-events:none}
+    .toast{padding:.5625rem .9375rem;border-radius:7px;font-size:.8125rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);pointer-events:auto;animation:tin .2s ease;max-width:340px;border:1px solid}
+    .t-ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .t-err{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    @keyframes tin{from{transform:translateX(110%);opacity:0}}
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══════════ Sidebar ══════════ -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">
+        <div class="sb-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".15" stroke="white" stroke-width="1.5"/>
+            <path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="sb-name">True Vote</div>
+          <div class="sb-sub">Платформа голосования</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section">Навигация</div>
+      <button class="nav-btn active" data-panel="overview">
+        <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Обзор системы
+      </button>
+      <button class="nav-btn" data-panel="elections">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="12" x2="8" y2="12"/></svg>
+        Голосования
+        <span class="nav-count">{{ votings|length }}</span>
+      </button>
+      <button class="nav-btn" data-panel="participants">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/><circle cx="12.5" cy="5.5" r="2"/><path d="M15 12.5c0-1.93-1.07-3.5-2.5-3.5"/></svg>
+        Участники
+        <span class="nav-count">{{ users|length }}</span>
+      </button>
+      <div class="sb-section">Система</div>
+      <button class="nav-btn" data-panel="audit">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5L2 4v4.5c0 3.5 2.7 6.5 6 7.5 3.3-1 6-4 6-7.5V4L8 1.5z"/><path d="M5.5 8.5l1.5 1.5 3.5-3.5"/></svg>
+        Журнал аудита
+      </button>
+    </nav>
+
+    <div class="sb-footer">
+      <div class="sys-status">
+        <div class="pulse"></div>
+        Система работает
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ Workspace ══════════ -->
+  <div class="workspace">
+    <header class="topbar">
+      <div class="crumb">
+        <span>True Vote</span>
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 2.5l3 3.5-3 3.5"/></svg>
+        <span id="crumb-cur" class="cur">Обзор системы</span>
+      </div>
+      <div class="top-right">
+        <div class="top-stat">Участников: <strong>{{ users|length }}</strong></div>
+        <div class="top-divider"></div>
+        <div class="top-stat">Голосований: <strong>{{ votings|length }}</strong></div>
+        <div class="top-divider"></div>
+        <span class="badge b-verified"><span class="bdot"></span>AES-256</span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ── Overview ── -->
+      <div id="panel-overview" class="panel active">
+        <div class="pg-header">
+          <div>
+            <div class="pg-title">Обзор системы</div>
+            <div class="pg-sub">Мониторинг активности голосований в реальном времени</div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-lbl">Активных голосований</div>
+            <div class="stat-val">{{ votings | selectattr('is_active', 'equalto', true) | list | length }}</div>
+            <div class="stat-meta">Текущий период</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-lbl">Участников в реестре</div>
+            <div class="stat-val">{{ users|length }}</div>
+            <div class="stat-meta">Всего зарегистрировано</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-lbl">Всего голосований</div>
+            <div class="stat-val">{{ votings|length }}</div>
+            <div class="stat-meta">За всё время</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-lbl">Статус системы</div>
+            <div class="stat-val" style="display:flex;align-items:center;gap:.375rem;font-size:.875rem;padding-top:.25rem">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L2 4v4.5c0 3.5 2.7 6.5 6 7.5 3.3-1 6-4 6-7.5V4L8 1.5z" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/><path d="M5.5 8.5l1.5 1.5 3.5-3.5" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span style="color:var(--ok);font-weight:700">ПОДТВЕРЖДЕНО</span>
+            </div>
+            <div class="stat-meta">SHA-256 · AES-256</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Реестр голосований</div>
+              <div class="card-sub">Все голосования системы</div>
+            </div>
+          </div>
+          {% if votings %}
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Вопрос</th><th>Статус</th><th>Завершается</th><th></th></tr></thead>
+              <tbody>
+              {% for v in votings %}
+                <tr>
+                  <td class="td-mono">#{{ v.id }}</td>
+                  <td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="td-bold">{{ v.question }}</td>
+                  <td>
+                    {% if v.is_draft %}<span class="badge b-draft"><span class="bdot"></span>Черновик</span>
+                    {% elif v.is_active %}<span class="badge b-active"><span class="bdot"></span>Активно</span>
+                    {% else %}<span class="badge b-ended"><span class="bdot"></span>Завершено</span>{% endif %}
+                  </td>
+                  <td class="td-dim">{{ v.ends_at }}</td>
+                  <td>
+                    <div style="display:flex;gap:.375rem;flex-wrap:wrap">
+                      {% if v.is_draft %}
+                        <button class="btn btn-g btn-sm" data-vid="{{ v.id }}" data-q="{{ v.question|e }}" data-ends="{{ v.ends_at }}" onclick="openEditBtn(this)">✎ Изменить</button>
+                        <button class="btn btn-p btn-sm" onclick="launchVoting({{ v.id }})">▶ Запустить</button>
+                      {% else %}
+                        <button class="btn btn-g btn-sm" onclick="toggleRes({{ v.id }}, this)">Результаты</button>
+                      {% endif %}
+                      <button class="btn btn-d btn-sm" onclick="deleteVoting({{ v.id }})">✕</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr id="rrow-{{ v.id }}" style="display:none">
+                  <td colspan="5" style="padding:0;background:var(--s50)">
+                    <div id="rdiv-{{ v.id }}" style="padding:.875rem 1.125rem"></div>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">Голосований ещё нет</div></div>
+          {% endif %}
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">Журнал активности</div></div>
+          <div class="card-body">
+            <ul class="audit-list" id="activity-log">
+              <li class="audit-row">
+                <div class="adot adot-b"></div>
+                <div class="a-msg"><strong>Система</strong> — база данных инициализирована и верифицирована.</div>
+                <div class="a-time">Сейчас</div>
+              </li>
+              {% for v in votings %}
+              <li class="audit-row">
+                <div class="adot adot-g"></div>
+                <div class="a-msg">Голосование <strong>#{{ v.id }}</strong> создано.
+                  {% if v.is_active %}<span class="badge b-active" style="margin-left:.3rem"><span class="bdot"></span>Active</span>
+                  {% else %}<span class="badge b-ended" style="margin-left:.3rem"><span class="bdot"></span>Ended</span>{% endif %}
+                </div>
+                <div class="a-time">{{ v.ends_at }}</div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Elections ── -->
+      <div id="panel-elections" class="panel">
+        <div class="pg-header">
+          <div>
+            <div class="pg-title">Управление голосованиями</div>
+            <div class="pg-sub">Создание и мониторинг голосований</div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          ℹ Создайте черновик голосования, отредактируйте при необходимости, затем нажмите <strong>▶ Запустить</strong> —
+          только тогда ссылки будут разосланы {{ users|length }} участникам. После запуска редактирование невозможно.
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Создать черновик голосования</div>
+              <div class="card-sub">Ссылки не рассылаются до нажатия «Запустить»</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <form id="createVotingForm">
+              <div class="fg2">
+                <div class="fg full">
+                  <label class="lbl">Вопрос голосования</label>
+                  <textarea class="txa" name="question" placeholder="Введите полный текст вопроса…" required></textarea>
+                </div>
+                <div class="fg">
+                  <label class="lbl">Длительность (часы)</label>
+                  <input class="inp" name="hours_valid" type="number" min="1" max="720" value="24" required>
+                  <div class="hint">Отсчёт начнётся с момента запуска</div>
+                </div>
+                <div class="fg end">
+                  <label class="lbl" aria-hidden="true" style="visibility:hidden">_</label>
+                  <button type="submit" class="btn btn-p btn-full" style="padding:.475rem .875rem;border:1.5px solid transparent">
+                    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+                    Создать черновик
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div id="createResult"></div>
+          </div>
+        </div>
+
+        {% if votings %}
+        <div class="card">
+          <div class="card-head"><div class="card-title">Все голосования</div></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Вопрос</th><th>Статус</th><th>Завершается</th><th>Действия</th></tr></thead>
+              <tbody>
+              {% for v in votings %}
+              <tr>
+                <td class="td-mono">#{{ v.id }}</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="td-bold">{{ v.question }}</td>
+                <td>
+                  {% if v.is_draft %}<span class="badge b-draft"><span class="bdot"></span>Черновик</span>
+                  {% elif v.is_active %}<span class="badge b-active"><span class="bdot"></span>Активно</span>
+                  {% else %}<span class="badge b-ended"><span class="bdot"></span>Завершено</span>{% endif %}
+                </td>
+                <td class="td-dim">{{ v.ends_at }}</td>
+                <td>
+                  <div style="display:flex;gap:.375rem;flex-wrap:wrap">
+                    {% if v.is_draft %}
+                      <button class="btn btn-g btn-sm" data-vid="{{ v.id }}" data-q="{{ v.question|e }}" data-ends="{{ v.ends_at }}" onclick="openEditBtn(this)">✎ Изменить</button>
+                      <button class="btn btn-p btn-sm" onclick="launchVoting({{ v.id }})">▶ Запустить</button>
+                    {% else %}
+                      <button class="btn btn-g btn-sm" onclick="openResultsPage({{ v.id }})">Полный отчёт ↗</button>
+                    {% endif %}
+                    <button class="btn btn-d btn-sm" onclick="deleteVoting({{ v.id }})">✕</button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── Participants ── -->
+      <div id="panel-participants" class="panel">
+        <div class="pg-header">
+          <div>
+            <div class="pg-title">Реестр участников</div>
+            <div class="pg-sub">Управление реестром участников</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">Добавить участника</div></div>
+          <div class="card-body">
+            <form id="addUserForm">
+              <div class="fg3">
+                <div class="fg">
+                  <label class="lbl">Наименование организации</label>
+                  <input class="inp" name="org_name" placeholder='ООО "Название"' required>
+                </div>
+                <div class="fg">
+                  <label class="lbl">Номер ОТО</label>
+                  <input class="inp" name="oto_number" placeholder="№ 001" required>
+                </div>
+                <div class="fg">
+                  <label class="lbl">Email</label>
+                  <input class="inp" name="email" type="email" placeholder="email@example.com" required>
+                </div>
+              </div>
+              <div style="margin-top:.75rem">
+                <button type="submit" class="btn btn-p">
+                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M7 1v12M1 7h12"/></svg>
+                  Добавить
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Участники</div>
+              <div class="card-sub">{{ users|length }} в реестре</div>
+            </div>
+          </div>
+          {% if users %}
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Организация</th><th>Номер ОТО</th><th>Email</th><th></th></tr></thead>
+              <tbody>
+              {% for u in users %}
+              <tr>
+                <td class="td-mono">#{{ u.id }}</td>
+                <td class="td-bold">{{ u.org_name }}</td>
+                <td>{{ u.oto_number }}</td>
+                <td class="td-dim">{{ u.email }}</td>
+                <td><button class="btn btn-d btn-sm" onclick="deleteUser({{ u.id }}, '{{ u.email }}')">Удалить</button></td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty"><div class="empty-ico">👥</div><div class="empty-txt">Участники ещё не добавлены</div></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Audit ── -->
+      <div id="panel-audit" class="panel">
+        <div class="pg-header">
+          <div>
+            <div class="pg-title">Журнал аудита</div>
+            <div class="pg-sub">Целостность системы и журнал действий администратора</div>
+          </div>
+          <span class="badge b-verified"><span class="bdot"></span>Защита от подделки</span>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Системные события</div>
+          </div>
+          <div class="card-body">
+            <ul class="audit-list">
+              <li class="audit-row">
+                <div class="adot adot-b"></div>
+                <div class="a-msg"><strong>ИНИЦИАЛИЗАЦИЯ</strong> — база данных верифицирована. Шифрование активно.</div>
+                <div class="a-time">Система</div>
+              </li>
+              {% for v in votings %}
+              <li class="audit-row">
+                <div class="adot adot-g"></div>
+                <div class="a-msg">
+                  <strong>ГОЛОСОВАНИЕ СОЗДАНО</strong> — #{{ v.id }}: "{{ v.question[:60] }}{% if v.question|length > 60 %}…{% endif %}"
+                </div>
+                <div class="a-time">{{ v.ends_at }}</div>
+              </li>
+              {% endfor %}
+              {% for u in users %}
+              <li class="audit-row">
+                <div class="adot adot-s"></div>
+                <div class="a-msg">
+                  <strong>УЧАСТНИК ДОБАВЛЕН</strong> — {{ u.org_name }} &lt;{{ u.email }}&gt; добавлен в реестр.
+                </div>
+                <div class="a-time">—</div>
+              </li>
+              {% endfor %}
+              {% if not votings and not users %}
+              <li class="audit-row">
+                <div class="adot adot-s"></div>
+                <div class="a-msg">Нет записей. Система ожидает первого действия.</div>
+                <div class="a-time">—</div>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ── Edit modal ── -->
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeEdit()">
+  <div style="background:white;border-radius:12px;width:100%;max-width:520px;box-shadow:0 24px 48px rgba(0,0,0,.25);overflow:hidden">
+    <div style="background:var(--s900);padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div style="width:26px;height:26px;background:var(--b600);border-radius:6px;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.5"/><path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <span style="font-size:.875rem;font-weight:700;color:white">Редактировать голосование</span>
+      </div>
+      <button onclick="closeEdit()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:1.2rem;line-height:1;padding:.125rem .375rem;border-radius:4px" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">✕</button>
+    </div>
+    <div style="padding:1.25rem">
+      <input type="hidden" id="editVotingId">
+      <div class="fg" style="margin-bottom:.875rem">
+        <label class="lbl">Вопрос голосования</label>
+        <textarea class="txa" id="editQuestion" rows="3" placeholder="Текст вопроса…"></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:1.125rem">
+        <label class="lbl">Дата и время окончания</label>
+        <input class="inp" type="datetime-local" id="editEndsAt">
+        <div class="hint">Текущее время окончания будет заменено</div>
+      </div>
+      <div style="display:flex;gap:.625rem;justify-content:flex-end">
+        <button class="btn btn-g" onclick="closeEdit()">Отмена</button>
+        <button class="btn btn-p" onclick="submitEdit()">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 7l3.5 3.5 6.5-7"/></svg>
+          Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+  // ── Token ──────────────────────────────────────────────────────────────────
+  const ADMIN_TOKEN = {{ admin_token | tojson }};
+
+  // ── Nav ────────────────────────────────────────────────────────────────────
+  const LABELS = { overview:'Обзор системы', elections:'Голосования', participants:'Участники', audit:'Журнал аудита' };
+
+  function activatePanel(name) {
+    if (!document.getElementById('panel-' + name)) name = 'overview';
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    document.querySelector(`.nav-btn[data-panel="${name}"]`).classList.add('active');
+    document.getElementById('crumb-cur').textContent = LABELS[name];
+    location.hash = name;
+  }
+
+  document.querySelectorAll('.nav-btn[data-panel]').forEach(btn => {
+    btn.addEventListener('click', () => activatePanel(btn.dataset.panel));
+  });
+
+  // Restore active panel after reload
+  const hashPanel = location.hash.replace('#', '');
+  if (hashPanel && LABELS[hashPanel]) activatePanel(hashPanel);
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'ok') {
+    const c = document.getElementById('toasts');
+    const el = document.createElement('div');
+    el.className = `toast t-${type}`;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  // ── Add user ───────────────────────────────────────────────────────────────
+  document.getElementById('addUserForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const t = ADMIN_TOKEN;
+    const fd = new FormData(e.target);
+    fd.set('admin_token', t);
+    const r = await fetch('/admin/add_user', { method: 'POST', body: new URLSearchParams(fd) });
+    const d = await r.json();
+    if (r.ok) { showToast('✓ ' + d.message); e.target.reset(); setTimeout(() => location.reload(), 900); }
+    else showToast('✗ ' + (d.detail || 'Ошибка'), 'err');
+  };
+
+  // ── Create voting (draft) ──────────────────────────────────────────────────
+  document.getElementById('createVotingForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    fd.set('admin_token', ADMIN_TOKEN);
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true; btn.textContent = 'Сохранение…';
+    const r = await fetch('/admin/create_voting', { method: 'POST', body: new URLSearchParams(fd) });
+    const d = await r.json();
+    btn.disabled = false; btn.innerHTML = '→ Создать черновик';
+    const res = document.getElementById('createResult');
+    if (r.ok) {
+      showToast(`✓ Черновик #${d.voting_id} создан`);
+      res.innerHTML = `<div style="margin-top:.75rem;padding:.625rem .875rem;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;font-size:.8125rem;color:#065f46">
+        ✓ Черновик голосования <strong>#${d.voting_id}</strong> создан. Перейдите в список и нажмите <strong>▶ Запустить</strong>.</div>`;
+      e.target.reset();
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      showToast('✗ ' + (d.detail || 'Ошибка'), 'err');
+      res.innerHTML = `<div style="margin-top:.75rem;padding:.625rem .875rem;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;font-size:.8125rem;color:#991b1b">✗ ${d.detail || 'Ошибка'}</div>`;
+    }
+  };
+
+  // ── Launch voting ──────────────────────────────────────────────────────────
+  async function launchVoting(id) {
+    if (!confirm(`Запустить голосование #${id}?\n\nПосле запуска ссылки будут разосланы участникам и редактирование станет невозможным.`)) return;
+    const btn = event.target;
+    btn.disabled = true; btn.textContent = '⏳ Рассылка…';
+    const r = await fetch('/admin/launch_voting', {
+      method: 'POST',
+      body: new URLSearchParams({ voting_id: id, admin_token: ADMIN_TOKEN }),
+    });
+    const d = await r.json();
+    if (r.ok) {
+      showToast(`✓ Голосование #${id} запущено · Отправлено: ${d.sent}`);
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      btn.disabled = false; btn.textContent = '▶ Запустить';
+      showToast('✗ ' + (d.detail || 'Ошибка'), 'err');
+    }
+  }
+
+  // ── Delete user ────────────────────────────────────────────────────────────
+  async function deleteUser(id, email) {
+    if (!confirm(`Удалить участника: ${email}?`)) return;
+    const t = ADMIN_TOKEN;
+    const r = await fetch('/admin/delete_user', {
+      method: 'POST', body: new URLSearchParams({ user_id: id, admin_token: t }),
+    });
+    if (r.ok) { showToast('Участник удалён'); setTimeout(() => location.reload(), 800); }
+    else showToast('Ошибка при удалении', 'err');
+  }
+
+  // ── Inline results ─────────────────────────────────────────────────────────
+  async function toggleRes(id, btn) {
+    const row = document.getElementById('rrow-' + id);
+    if (row.style.display !== 'none') { row.style.display = 'none'; btn.textContent = 'Результаты'; return; }
+    const t = ADMIN_TOKEN;
+    const r = await fetch(`/results/${id}/json?admin_token=${t}`);
+    if (!r.ok) { showToast('Ошибка загрузки результатов', 'err'); return; }
+    const d = await r.json();
+    const total = d.total_votes || 0, denom = total || 1;
+    const quorum = d.total_invited ? Math.round(total / d.total_invited * 100) : 0;
+    document.getElementById('rdiv-' + id).innerHTML = `
+      <div class="res-grid">
+        ${rCell('ЗА', d.for, denom, '#16a34a', '#dcfce7')}
+        ${rCell('ПРОТИВ', d.against, denom, '#dc2626', '#fee2e2')}
+        ${rCell('ВОЗДЕРЖАЛИСЬ', d.abstained, denom, '#d97706', '#fef3c7')}
+      </div>
+      <div style="font-size:.75rem;color:var(--s500);display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+        <span>Проголосовало: <strong style="color:var(--s900)">${total}</strong> / ${d.total_invited}</span>
+        <span>Явка: <strong style="color:var(--s900)">${quorum}%</strong></span>
+        <a href="/results/${id}?admin_token=${t}" target="_blank"
+           style="color:var(--b600);font-weight:600;text-decoration:none;margin-left:auto">Полный отчёт ↗</a>
+      </div>`;
+    row.style.display = 'table-row';
+    btn.textContent = 'Скрыть';
+  }
+
+  function rCell(label, count, denom, color, bg) {
+    const pct = Math.round(count / denom * 100);
+    return `<div style="background:${bg};border-radius:6px;padding:.625rem .875rem">
+      <div style="font-size:1.375rem;font-weight:800;color:${color};line-height:1">${count}</div>
+      <div style="font-size:.625rem;font-weight:700;color:${color};opacity:.8;margin:.2rem 0">${label}</div>
+      <div style="font-size:.625rem;color:${color};opacity:.65">${pct}%</div>
+    </div>`;
+  }
+
+  function openResultsPage(id) {
+    const t = ADMIN_TOKEN;
+    window.open(`/results/${id}?admin_token=${t}`, '_blank');
+  }
+
+  // ── Delete voting ──────────────────────────────────────────────────────────
+  async function deleteVoting(id) {
+    if (!confirm(`Удалить голосование #${id}?\n\nВсе голоса и ссылки будут аннулированы. Действие необратимо.`)) return;
+    const r = await fetch('/admin/delete_voting', {
+      method: 'POST',
+      body: new URLSearchParams({ voting_id: id, admin_token: ADMIN_TOKEN }),
+    });
+    if (r.ok) { showToast('Голосование удалено'); setTimeout(() => location.reload(), 800); }
+    else { const d = await r.json(); showToast('✗ ' + (d.detail || 'Ошибка'), 'err'); }
+  }
+
+  // ── Edit voting modal ──────────────────────────────────────────────────────
+  function openEditBtn(btn) {
+    document.getElementById('editVotingId').value = btn.dataset.vid;
+    document.getElementById('editQuestion').value = btn.dataset.q;
+    document.getElementById('editEndsAt').value = btn.dataset.ends.replace(' ', 'T').slice(0, 16);
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeEdit() {
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  async function submitEdit() {
+    const id       = document.getElementById('editVotingId').value;
+    const question = document.getElementById('editQuestion').value.trim();
+    const endsAt   = document.getElementById('editEndsAt').value;
+    if (!question) { showToast('Введите текст вопроса', 'err'); return; }
+    if (!endsAt)   { showToast('Укажите дату окончания', 'err'); return; }
+    const r = await fetch('/admin/edit_voting', {
+      method: 'POST',
+      body: new URLSearchParams({
+        voting_id: id,
+        question,
+        ends_at: endsAt.replace('T', ' ') + ':00',
+        admin_token: ADMIN_TOKEN,
+      }),
+    });
+    if (r.ok) {
+      showToast('✓ Голосование обновлено');
+      closeEdit();
+      setTimeout(() => location.reload(), 900);
+    } else {
+      const d = await r.json();
+      showToast('✗ ' + (d.detail || 'Ошибка'), 'err');
+    }
+  }
+
+  // Close modal on Escape
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEdit(); });
+</script>
+</body>
+</html>

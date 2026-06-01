@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>True Vote — Голосование</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --s900:#0f172a; --s700:#334155; --s600:#475569; --s500:#64748b;
+      --s400:#94a3b8; --s300:#cbd5e1; --s200:#e2e8f0; --s100:#f1f5f9; --s50:#f8fafc;
+      --b700:#1d4ed8; --b600:#2563eb; --b500:#3b82f6; --b100:#dbeafe; --b50:#eff6ff;
+      --ok:#059669; --ok-bg:#d1fae5;
+      --err:#dc2626; --err-bg:#fee2e2;
+      --warn:#d97706; --warn-bg:#fef3c7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      min-height:100vh;
+      background:var(--s100);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:1.25rem;
+    }
+
+    /* ── Card ── */
+    .card{
+      background:white;
+      border:1px solid var(--s200);
+      border-radius:12px;
+      width:100%;max-width:480px;
+      box-shadow:0 4px 24px rgba(0,0,0,.07);
+      overflow:hidden;
+    }
+
+    /* ── Card top bar ── */
+    .card-bar{
+      background:var(--s900);
+      padding:.75rem 1.25rem;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .bar-brand{display:flex;align-items:center;gap:.625rem}
+    .bar-icon{
+      width:30px;height:30px;background:var(--b600);border-radius:7px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .bar-icon svg{width:17px;height:17px}
+    .bar-name{font-size:.875rem;font-weight:700;color:white;letter-spacing:-.01em}
+    .bar-sub{font-size:.6875rem;color:rgba(255,255,255,.45);margin-top:.5px}
+
+    /* ── Steps ── */
+    .steps{
+      display:flex;align-items:center;gap:.25rem;
+      padding:.625rem 1.25rem;
+      background:var(--s50);border-bottom:1px solid var(--s200);
+    }
+    .step{display:flex;align-items:center;gap:.375rem;font-size:.6875rem;font-weight:600;color:var(--s400)}
+    .step.active{color:var(--b600)}
+    .step.done{color:var(--ok)}
+    .step-num{
+      width:18px;height:18px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:.625rem;font-weight:700;
+      background:var(--s200);color:var(--s500);flex-shrink:0;
+    }
+    .step.active .step-num{background:var(--b600);color:white}
+    .step.done .step-num{background:var(--ok);color:white;font-size:.7rem}
+    .step-line{flex:1;height:1px;background:var(--s200)}
+
+    /* ── Card body ── */
+    .card-body{padding:1.25rem}
+
+    /* ── Org badge ── */
+    .org-badge{
+      display:flex;align-items:center;gap:.375rem;
+      background:var(--b50);border:1px solid var(--b100);border-radius:6px;
+      padding:.4rem .75rem;font-size:.8125rem;font-weight:600;color:var(--b700);
+      margin-bottom:1rem;
+    }
+    .org-badge svg{width:13px;height:13px;flex-shrink:0}
+
+    /* ── Question ── */
+    .q-lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--s400);margin-bottom:.35rem}
+    .question{
+      font-size:.9375rem;font-weight:600;line-height:1.55;color:var(--s900);
+      background:var(--s50);border-radius:8px;padding:.875rem 1rem;
+      border-left:3px solid var(--b600);margin-bottom:1rem;
+    }
+
+    /* ── Timer ── */
+    .timer{
+      display:flex;align-items:center;gap:.35rem;
+      font-size:.75rem;color:var(--s500);margin-bottom:1.125rem;
+    }
+    .timer strong{color:var(--s700)}
+    .timer svg{width:12px;height:12px;flex-shrink:0}
+
+    /* ── Instructions ── */
+    .instr{list-style:none;margin-bottom:1.125rem}
+    .instr li{
+      display:flex;align-items:flex-start;gap:.5rem;
+      font-size:.8125rem;color:var(--s600);line-height:1.5;
+      padding:.3125rem 0;border-bottom:1px solid var(--s100);
+    }
+    .instr li:last-child{border-bottom:none}
+    .instr li svg{width:13px;height:13px;flex-shrink:0;margin-top:.2rem;color:var(--b500)}
+
+    /* ── Proceed button ── */
+    .btn-proceed{
+      display:flex;align-items:center;justify-content:center;gap:.375rem;
+      width:100%;padding:.6875rem 1rem;
+      background:var(--b600);color:white;border:none;border-radius:7px;
+      font-family:inherit;font-size:.875rem;font-weight:600;cursor:pointer;
+      transition:background .12s,transform .12s;
+    }
+    .btn-proceed:hover{background:var(--b700);transform:translateY(-1px)}
+    .btn-proceed svg{width:13px;height:13px}
+
+    /* ── Vote buttons ── */
+    .vote-btn{
+      display:flex;align-items:center;gap:.75rem;
+      padding:.8125rem 1.125rem;
+      border:2px solid;border-radius:9px;
+      font-family:inherit;font-size:.9375rem;font-weight:700;
+      cursor:pointer;transition:all .15s;width:100%;text-align:left;margin-bottom:.625rem;
+    }
+    .vote-btn:last-child{margin-bottom:0}
+    .vote-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+    .vote-btn:active:not(:disabled){transform:none;box-shadow:none}
+    .vote-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+    .vbtn-ico{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9375rem;flex-shrink:0}
+    .vbtn-txt{flex:1}
+    .vbtn-main{display:block;font-size:.9375rem;font-weight:700}
+    .vbtn-sub{display:block;font-size:.6875rem;font-weight:400;opacity:.7;margin-top:.1rem}
+
+    .btn-for{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+    .btn-for .vbtn-ico{background:var(--ok);color:white}
+    .btn-for:hover:not(:disabled){background:var(--ok);color:white}
+    .btn-for:hover:not(:disabled) .vbtn-ico{background:rgba(255,255,255,.22)}
+
+    .btn-against{background:var(--err-bg);color:var(--err);border-color:var(--err)}
+    .btn-against .vbtn-ico{background:var(--err);color:white}
+    .btn-against:hover:not(:disabled){background:var(--err);color:white}
+    .btn-against:hover:not(:disabled) .vbtn-ico{background:rgba(255,255,255,.22)}
+
+    .btn-abstain{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+    .btn-abstain .vbtn-ico{background:var(--warn);color:white}
+    .btn-abstain:hover:not(:disabled){background:var(--warn);color:white}
+    .btn-abstain:hover:not(:disabled) .vbtn-ico{background:rgba(255,255,255,.22)}
+
+    /* ── Spinner ── */
+    .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .5s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Status screens ── */
+    .status-screen{padding:2rem 1.25rem;text-align:center}
+    .st-icon{font-size:2.5rem;margin-bottom:.75rem}
+    .st-title{font-size:1.0625rem;font-weight:700;color:var(--s900);margin-bottom:.375rem}
+    .st-sub{font-size:.875rem;color:var(--s500);line-height:1.55}
+
+    /* ── Success receipt (simple) ── */
+    .receipt{
+      background:var(--s50);border:1px solid var(--s200);border-radius:8px;
+      padding:.875rem 1rem;margin-top:1rem;
+    }
+    .r-row{display:flex;justify-content:space-between;align-items:center;font-size:.8125rem;padding:.3rem 0;border-bottom:1px solid var(--s200)}
+    .r-row:last-child{border-bottom:none}
+    .r-key{color:var(--s500);font-weight:500}
+    .r-val{color:var(--s700);font-weight:600}
+
+    /* ── Card tints for error states ── */
+    .tint-ok .card-bar{background:var(--ok)}
+    .tint-err .card-bar{background:var(--err)}
+    .tint-warn .card-bar{background:var(--s700)}
+
+    /* ── Fade-in ── */
+    .fade-in{animation:fadeIn .3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}}
+
+    /* ── Error msg ── */
+    .err-msg{
+      margin-top:.75rem;padding:.5625rem .875rem;
+      background:var(--err-bg);border:1px solid #fca5a5;border-radius:6px;
+      font-size:.8125rem;color:#991b1b;
+    }
+  </style>
+</head>
+<body>
+
+{% if error %}
+
+  <div class="card {% if error_type == 'already_voted' %}tint-ok{% elif error_type == 'expired' %}tint-warn{% else %}tint-err{% endif %}">
+    <div class="card-bar">
+      <div class="bar-brand">
+        <div class="bar-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.5"/>
+            <path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="bar-name">True Vote</div>
+        </div>
+      </div>
+    </div>
+    <div class="status-screen">
+      <div class="st-icon">
+        {% if error_type == 'already_voted' %}✅
+        {% elif error_type == 'expired' %}🕐
+        {% else %}⚠️{% endif %}
+      </div>
+      <div class="st-title">{{ error }}</div>
+      <div class="st-sub">
+        {% if error_type == 'already_voted' %}
+          Ваш голос был успешно зафиксирован в системе.
+        {% elif error_type == 'expired' %}
+          Период приёма голосов завершён. Обратитесь к организаторам.
+        {% else %}
+          Ссылка недействительна или голосование не найдено. Обратитесь к организаторам.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% else %}
+
+  <div class="card fade-in">
+    <div class="card-bar">
+      <div class="bar-brand">
+        <div class="bar-icon">
+          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.5"/>
+            <path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="bar-name">True Vote</div>
+          <div class="bar-sub">Платформа голосования</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Шаг 1: Инструкции -->
+    <div id="step1">
+      <div class="steps">
+        <div class="step active"><div class="step-num">1</div>Инструкции</div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-num">2</div>Голосование</div>
+      </div>
+      <div class="card-body">
+        {% if org_name %}
+        <div class="org-badge">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="5" width="12" height="8" rx="1"/><path d="M5 5V3.5a2 2 0 014 0V5"/></svg>
+          {{ org_name }}
+        </div>
+        {% endif %}
+
+        <div class="q-lbl">Вопрос голосования</div>
+        <div class="question">{{ question }}</div>
+
+        {% if time_left_str %}
+        <div class="timer">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><path d="M7 4v3.5l2 2"/></svg>
+          Время до завершения: <strong>{{ time_left_str }}</strong>
+        </div>
+        {% endif %}
+
+        <ul class="instr">
+          <li>
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><path d="M7 4v3M7 10v.5"/></svg>
+            Ваш голос нельзя изменить после подтверждения.
+          </li>
+          <li>
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="10" height="8" rx="1"/><path d="M5 4V2.5a2 2 0 014 0V4"/></svg>
+            Ссылка персональна и предназначена только для вас.
+          </li>
+          <li>
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1L1 3.5v3C1 9.5 3.3 11.5 6 12.5c2.7-1 5-3 5-6v-3L7 1z"/><path d="M4.5 7l1.5 1.5 3-3"/></svg>
+            Голосование является анонимным.
+          </li>
+        </ul>
+
+        <button class="btn-proceed" onclick="goStep2()">
+          Перейти к голосованию
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Шаг 2: Бюллетень -->
+    <div id="step2" style="display:none">
+      <div class="steps">
+        <div class="step done"><div class="step-num">✓</div>Инструкции</div>
+        <div class="step-line"></div>
+        <div class="step active"><div class="step-num">2</div>Голосование</div>
+      </div>
+      <div class="card-body">
+        <div class="q-lbl">Вопрос на голосование</div>
+        <div class="question">{{ question }}</div>
+
+        {% if time_left_str %}
+        <div class="timer">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="6"/><path d="M7 4v3.5l2 2"/></svg>
+          Осталось: <strong>{{ time_left_str }}</strong>
+        </div>
+        {% endif %}
+
+        <div id="voteButtons">
+          <button class="vote-btn btn-for" onclick="castVote('for', this)">
+            <div class="vbtn-ico">✓</div>
+            <div class="vbtn-txt">
+              <span class="vbtn-main">ЗА</span>
+              <span class="vbtn-sub">Поддержать решение</span>
+            </div>
+          </button>
+          <button class="vote-btn btn-against" onclick="castVote('against', this)">
+            <div class="vbtn-ico">✗</div>
+            <div class="vbtn-txt">
+              <span class="vbtn-main">ПРОТИВ</span>
+              <span class="vbtn-sub">Отклонить решение</span>
+            </div>
+          </button>
+          <button class="vote-btn btn-abstain" onclick="castVote('abstained', this)">
+            <div class="vbtn-ico">—</div>
+            <div class="vbtn-txt">
+              <span class="vbtn-main">ВОЗДЕРЖАТЬСЯ</span>
+              <span class="vbtn-sub">Не выражать позицию</span>
+            </div>
+          </button>
+        </div>
+        <div id="voteMsg"></div>
+      </div>
+    </div>
+
+    <!-- Шаг 3: Подтверждение -->
+    <div id="step3" style="display:none" class="fade-in">
+      <div class="card-body">
+        <div class="status-screen" style="padding:1.25rem 0 1rem">
+          <div class="st-icon">✅</div>
+          <div class="st-title">Голос принят</div>
+          <div class="st-sub">Ваш голос успешно зафиксирован в системе.</div>
+        </div>
+        <div class="receipt">
+          <div class="r-row"><span class="r-key">Голосование №</span><span class="r-val" id="r-vid">—</span></div>
+          <div class="r-row"><span class="r-key">Ваш выбор</span><span class="r-val" id="r-choice">—</span></div>
+          <div class="r-row"><span class="r-key">Дата и время</span><span class="r-val" id="r-time">—</span></div>
+          <div class="r-row"><span class="r-key">Статус</span><span class="r-val" style="color:var(--ok)">Учтён ✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const VOTING_ID = '{{ voting_id }}';
+    const LABELS   = { for:'ЗА', against:'ПРОТИВ', abstained:'ВОЗДЕРЖАТЬСЯ' };
+    const SUBS     = { for:'Поддержать решение', against:'Отклонить решение', abstained:'Не выражать позицию' };
+    const ICONS    = { for:'✓', against:'✗', abstained:'—' };
+    let submitted  = false;
+
+    function goStep2() {
+      document.getElementById('step1').style.display = 'none';
+      const s2 = document.getElementById('step2');
+      s2.style.display = 'block';
+      s2.classList.add('fade-in');
+    }
+
+    async function castVote(choice, btn) {
+      if (submitted) return;
+      submitted = true;
+      document.querySelectorAll('.vote-btn').forEach(b => b.disabled = true);
+      btn.innerHTML = `<div class="vbtn-ico"><span class="spin"></span></div><div class="vbtn-txt"><span class="vbtn-main">Отправка…</span></div>`;
+
+      const fd = new URLSearchParams();
+      fd.append('choice', choice);
+      const r = await fetch(window.location.href, { method: 'POST', body: fd });
+      const d = await r.json();
+
+      if (r.ok) {
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+        const now = new Date();
+        document.getElementById('r-vid').textContent = '#' + VOTING_ID;
+        document.getElementById('r-choice').textContent = LABELS[choice] || choice;
+        document.getElementById('r-time').textContent = now.toLocaleString('ru-RU');
+      } else {
+        submitted = false;
+        document.querySelectorAll('.vote-btn').forEach(b => b.disabled = false);
+        btn.innerHTML = `<div class="vbtn-ico">${ICONS[choice]}</div><div class="vbtn-txt"><span class="vbtn-main">${LABELS[choice]}</span><span class="vbtn-sub">${SUBS[choice]}</span></div>`;
+        document.getElementById('voteMsg').innerHTML =
+          `<div class="err-msg">✗ ${d.detail || 'Ошибка при отправке голоса'}</div>`;
+      }
+    }
+  </script>
+
+{% endif %}
+
+</body>
+</html>

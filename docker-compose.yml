@@ -1,0 +1,13 @@
+services:
+  voting:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - voting_data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  voting_data:

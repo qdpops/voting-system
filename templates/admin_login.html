@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>True Vote — Admin Access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      min-height:100vh;
+      background:linear-gradient(160deg,#0f172a 0%,#0d1f3c 50%,#0a1628 100%);
+      display:flex;align-items:center;justify-content:center;padding:1.25rem;
+    }
+    .card{
+      background:white;border-radius:14px;width:100%;max-width:400px;
+      overflow:hidden;
+      box-shadow:0 32px 64px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);
+    }
+    .card-bar{
+      background:#0f172a;padding:.875rem 1.375rem;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .brand{display:flex;align-items:center;gap:.5rem}
+    .brand-icon{width:28px;height:28px;background:#2563eb;border-radius:6px;display:flex;align-items:center;justify-content:center}
+    .brand-icon svg{width:15px;height:15px;fill:white}
+    .brand-name{font-size:.875rem;font-weight:700;color:white}
+    .enc{display:flex;align-items:center;gap:.3rem;font-size:.6rem;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.45)}
+    .enc-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 5px #4ade80}
+    .card-body{padding:1.75rem 1.5rem}
+    .lock-icon{
+      width:48px;height:48px;background:#eff6ff;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;
+    }
+    .lock-icon svg{width:22px;height:22px;color:#2563eb}
+    h1{font-size:1.125rem;font-weight:700;color:#0f172a;text-align:center;margin-bottom:.375rem}
+    .sub{font-size:.8125rem;color:#64748b;text-align:center;margin-bottom:1.5rem;line-height:1.5}
+    .lbl{font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:.3rem;display:block}
+    .inp-wrap{position:relative;margin-bottom:1rem}
+    .inp-wrap svg{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;pointer-events:none}
+    input[type="password"]{
+      width:100%;padding:.6rem .75rem .6rem 2.25rem;
+      border:1.5px solid #e2e8f0;border-radius:7px;
+      font-size:.875rem;font-family:inherit;color:#0f172a;
+      transition:border-color .12s,box-shadow .12s;
+    }
+    input[type="password"]:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    input[type="password"]::placeholder{color:#cbd5e1}
+    .btn{
+      width:100%;padding:.6875rem 1rem;
+      background:#2563eb;color:white;border:none;border-radius:7px;
+      font-size:.875rem;font-weight:600;font-family:inherit;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:.375rem;
+      transition:background .12s,transform .12s;
+    }
+    .btn:hover{background:#1d4ed8;transform:translateY(-1px)}
+    .btn svg{width:14px;height:14px}
+    .error-box{
+      background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;
+      padding:.625rem .875rem;margin-bottom:1rem;
+      font-size:.8125rem;color:#991b1b;
+      display:flex;align-items:center;gap:.5rem;
+    }
+    .error-box svg{width:14px;height:14px;flex-shrink:0}
+    .hint-box{
+      background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;
+      padding:.75rem 1rem;margin-top:1rem;
+      font-size:.75rem;color:#64748b;line-height:1.55;
+    }
+    .hint-box code{
+      display:block;margin-top:.4rem;
+      font-family:monospace;font-size:.75rem;
+      background:#0f172a;color:#7dd3fc;
+      padding:.35rem .6rem;border-radius:5px;
+    }
+    .sec-footer{
+      display:flex;align-items:center;justify-content:center;gap:.75rem;
+      padding:.75rem 1.375rem;border-top:1px solid #f1f5f9;background:#f8fafc;
+    }
+    .sec-item{display:flex;align-items:center;gap:.2rem;font-size:.625rem;font-weight:600;color:#94a3b8;letter-spacing:.03em}
+    .sec-item svg{width:10px;height:10px}
+    .sec-sep{width:3px;height:3px;border-radius:50%;background:#cbd5e1}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-bar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.5"/><path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="brand-name">True Vote</span>
+    </div>
+    <div class="enc"><span class="enc-dot"></span>AES-256 АКТИВНО</div>
+  </div>
+
+  <div class="card-body">
+    <div class="lock-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+
+    <h1>Вход в систему</h1>
+    <p class="sub">Введите токен администратора для доступа к системе управления</p>
+
+    {% if error %}
+    <div class="error-box">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="7"/><path d="M8 5v3M8 11v.5"/>
+      </svg>
+      {{ error }} — доступ запрещён
+    </div>
+    {% endif %}
+
+    <label class="lbl">Токен администратора</label>
+    <div class="inp-wrap">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="7" width="10" height="8" rx="1.5"/>
+        <path d="M5.5 7V5a2.5 2.5 0 015 0v2"/>
+      </svg>
+      <input type="password" id="tokenInput" placeholder="Введите токен…" autocomplete="current-password">
+    </div>
+
+    <button class="btn" onclick="doLogin()">
+      Войти в консоль
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path d="M2 7h10M7 2l5 5-5 5"/>
+      </svg>
+    </button>
+
+    <div class="hint-box">
+      Или добавьте токен напрямую в URL:
+      <code>{{ request.base_url }}admin?token=ВАШ_ТОКЕН</code>
+    </div>
+  </div>
+
+  <div class="sec-footer">
+    <div class="sec-item">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M6 1L1 3.5v3C1 9.5 3.3 11.5 6 12.5c2.7-1 5-3 5-6v-3L6 1z"/>
+      </svg>
+      AES-256
+    </div>
+    <div class="sec-sep"></div>
+    <div class="sec-item">Защищённый доступ</div>
+    <div class="sec-sep"></div>
+    <div class="sec-item">True Vote</div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('tokenInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doLogin();
+  });
+  function doLogin() {
+    const t = document.getElementById('tokenInput').value.trim();
+    if (!t) return;
+    window.location.href = '/admin?token=' + encodeURIComponent(t);
+  }
+</script>
+</body>
+</html>

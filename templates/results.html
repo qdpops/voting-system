@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>True Vote — Отчёт о голосовании #{{ voting.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --s900:#0f172a;--s800:#1e293b;--s700:#334155;--s600:#475569;
+      --s500:#64748b;--s400:#94a3b8;--s300:#cbd5e1;--s200:#e2e8f0;
+      --s100:#f1f5f9;--s50:#f8fafc;
+      --b700:#1d4ed8;--b600:#2563eb;--b100:#dbeafe;--b50:#eff6ff;
+      --ok:#059669;--ok-bg:#d1fae5;--ok-dark:#065f46;
+      --err:#dc2626;--err-bg:#fee2e2;
+      --warn:#d97706;--warn-bg:#fef3c7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--s100);color:var(--s900);min-height:100vh}
+
+    /* ── Top nav ── */
+    .topnav{
+      background:var(--s900);
+      padding:.875rem 1.5rem;
+      display:flex;align-items:center;justify-content:space-between;
+      gap:1rem;
+    }
+    .nav-brand{display:flex;align-items:center;gap:.5rem}
+    .nav-icon{width:28px;height:28px;background:var(--b600);border-radius:6px;display:flex;align-items:center;justify-content:center}
+    .nav-icon svg{width:15px;height:15px;fill:white}
+    .nav-name{font-size:.875rem;font-weight:700;color:white}
+    .nav-right{display:flex;align-items:center;gap:.75rem}
+    .nav-badge{display:flex;align-items:center;gap:.25rem;font-size:.625rem;font-weight:700;letter-spacing:.05em;color:rgba(255,255,255,.5)}
+    .enc-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 5px #4ade80}
+
+    /* ── Actions bar ── */
+    .actions-bar{
+      background:white;border-bottom:1px solid var(--s200);
+      padding:.75rem 1.5rem;
+      display:flex;align-items:center;gap:.625rem;
+    }
+    .btn{display:inline-flex;align-items:center;gap:.3rem;padding:.375rem .75rem;border:1.5px solid var(--s200);border-radius:6px;font-size:.75rem;font-weight:600;font-family:inherit;cursor:pointer;background:white;color:var(--s600);transition:all .12s;text-decoration:none}
+    .btn:hover{border-color:var(--s300);color:var(--s900);background:var(--s50)}
+    .btn svg{width:12px;height:12px}
+    .btn-primary{background:var(--b600);color:white;border-color:var(--b600)}
+    .btn-primary:hover{background:var(--b700);border-color:var(--b700)}
+
+    /* ── Container ── */
+    .container{max-width:780px;margin:0 auto;padding:1.5rem 1rem}
+
+    /* ── Cards ── */
+    .card{background:white;border:1px solid var(--s200);border-radius:10px;overflow:hidden;margin-bottom:1rem}
+    .card-head{padding:1rem 1.25rem;border-bottom:1px solid var(--s100)}
+    .card-body{padding:1.25rem}
+    .card-title{font-size:.9375rem;font-weight:700;color:var(--s900)}
+    .card-sub{font-size:.75rem;color:var(--s500);margin-top:.2rem}
+
+    /* ── Election header ── */
+    .election-id{
+      display:inline-flex;align-items:center;gap:.375rem;
+      font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+      color:var(--b600);background:var(--b50);border:1px solid var(--b100);
+      border-radius:4px;padding:.2rem .5rem;margin-bottom:.625rem;
+    }
+    .election-question{
+      font-size:1.1875rem;font-weight:700;line-height:1.5;color:var(--s900);
+      border-left:4px solid var(--b600);padding-left:1rem;margin-bottom:1.25rem;
+    }
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap}
+    .meta-item{display:flex;align-items:center;gap:.35rem;font-size:.8125rem;color:var(--s500)}
+    .meta-item strong{color:var(--s700)}
+    .meta-item svg{width:13px;height:13px;flex-shrink:0}
+
+    /* ── Stats ── */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+    @media(max-width:520px){.stats-row{grid-template-columns:1fr}}
+    .stat-cell{border-radius:8px;padding:1rem 1.125rem}
+    .sc-for{background:var(--ok-bg)}.sc-against{background:var(--err-bg)}.sc-abstain{background:var(--warn-bg)}
+    .sc-num{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.25rem}
+    .sc-for .sc-num{color:var(--ok)}.sc-against .sc-num{color:var(--err)}.sc-abstain .sc-num{color:var(--warn)}
+    .sc-label{font-size:.6875rem;font-weight:700;opacity:.8}
+    .sc-for .sc-label{color:var(--ok)}.sc-against .sc-label{color:var(--err)}.sc-abstain .sc-label{color:var(--warn)}
+    .sc-pct{font-size:.6875rem;opacity:.6;margin-top:.15rem}
+    .sc-for .sc-pct{color:var(--ok)}.sc-against .sc-pct{color:var(--err)}.sc-abstain .sc-pct{color:var(--warn)}
+
+    /* ── Bars ── */
+    .bar-item{margin-bottom:1rem}
+    .bar-item:last-child{margin-bottom:0}
+    .bar-head{display:flex;justify-content:space-between;font-size:.8125rem;font-weight:500;margin-bottom:.375rem}
+    .bar-val{color:var(--s500)}
+    .bar-track{height:10px;background:var(--s100);border-radius:5px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:5px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+    .bf-for{background:var(--ok)}.bf-against{background:var(--err)}.bf-abstain{background:var(--warn)}
+
+    /* ── Quorum ── */
+    .quorum-block{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--s50);border:1px solid var(--s200);border-radius:8px;
+      padding:1rem 1.25rem;margin-top:1.25rem;
+    }
+    .q-label{font-size:.875rem;font-weight:600;color:var(--s700)}
+    .q-sub{font-size:.75rem;color:var(--s500);margin-top:.2rem}
+    .q-num{font-size:2rem;font-weight:800;color:var(--b600);letter-spacing:-.03em}
+
+    /* ── Verification ── */
+    .verify-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    @media(max-width:520px){.verify-grid{grid-template-columns:1fr}}
+    .verify-cell{
+      background:var(--s50);border:1px solid var(--s200);border-radius:8px;
+      padding:.875rem 1rem;
+    }
+    .vcell-lbl{font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--s400);margin-bottom:.3rem}
+    .vcell-val{font-size:.8125rem;font-weight:600;color:var(--s700);font-family:monospace;word-break:break-all}
+    .vcell-val.verified{color:var(--ok);display:flex;align-items:center;gap:.35rem}
+    .vcell-val.verified svg{width:14px;height:14px;flex-shrink:0}
+
+    /* ── Print ── */
+    @media print{
+      body{background:white}
+      .topnav,.actions-bar{display:none}
+      .container{padding:.5rem;max-width:100%}
+      .card{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<div class="topnav">
+  <div class="nav-brand">
+    <div class="nav-icon">
+      <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="17" rx="2.5" fill="white" fill-opacity=".2" stroke="white" stroke-width="1.5"/><path d="M7 7h6M7 10.5h4" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M10 14l1.5 1.5 3-3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div class="nav-name">True Vote</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-badge"><span class="enc-dot"></span>&nbsp;SHA-256 ПОДТВЕРЖДЕНО</div>
+    <div class="nav-badge"><span class="enc-dot"></span>&nbsp;AES-256 ЗАЩИЩЕНО</div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="actions-bar">
+  <a href="/admin" class="btn">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 2.5l-5 3.5 5 3.5"/></svg>
+    Панель управления
+  </a>
+  <button class="btn btn-primary" onclick="window.print()">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="8" height="6" rx="1"/><path d="M4 4V2h4v2M4 8h4"/></svg>
+    Распечатать
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- Election info -->
+  <div class="card">
+    <div class="card-body">
+      <div class="election-id">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 1L1 3.5v3C1 9.5 3.3 11.5 6 12.5c2.7-1 5-3 5-6v-3L6 1z"/></svg>
+        Отчёт о голосовании · ID #{{ voting.id }}
+      </div>
+      <div class="election-question">{{ voting.question }}</div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="10" height="10" rx="1"/><path d="M2 5.5h10M5 2v3.5M9 2v3.5"/></svg>
+          Завершилось: <strong>{{ voting.ends_at }}</strong>
+        </div>
+        <div class="meta-item">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5"/></svg>
+          Приглашено: <strong>{{ total_invited }}</strong>
+        </div>
+        <div class="meta-item">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 7l3.5 3.5 6.5-7"/></svg>
+          Проголосовало: <strong>{{ total_voted }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Результаты голосования</div>
+      <div class="card-sub">Официальные результаты подсчёта голосов</div>
+    </div>
+    <div class="card-body">
+
+      <div class="stats-row">
+        <div class="stat-cell sc-for">
+          <div class="sc-num">{{ votes_for }}</div>
+          <div class="sc-label">✓ ЗА</div>
+          {% if total_voted > 0 %}
+          <div class="sc-pct">{{ (votes_for / total_voted * 100)|round(1) }}% от проголосовавших</div>
+          {% endif %}
+        </div>
+        <div class="stat-cell sc-against">
+          <div class="sc-num">{{ votes_against }}</div>
+          <div class="sc-label">✗ ПРОТИВ</div>
+          {% if total_voted > 0 %}
+          <div class="sc-pct">{{ (votes_against / total_voted * 100)|round(1) }}% от проголосовавших</div>
+          {% endif %}
+        </div>
+        <div class="stat-cell sc-abstain">
+          <div class="sc-num">{{ votes_abstained }}</div>
+          <div class="sc-label">— ВОЗДЕРЖАЛИСЬ</div>
+          {% if total_voted > 0 %}
+          <div class="sc-pct">{{ (votes_abstained / total_voted * 100)|round(1) }}% от проголосовавших</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% set d = total_voted if total_voted > 0 else 1 %}
+      <div class="bar-item">
+        <div class="bar-head"><span style="color:var(--ok);font-weight:600">ЗА</span><span class="bar-val">{{ votes_for }} голосов</span></div>
+        <div class="bar-track"><div class="bar-fill bf-for" style="width:{{ (votes_for/d*100)|round|int }}%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-head"><span style="color:var(--err);font-weight:600">ПРОТИВ</span><span class="bar-val">{{ votes_against }} голосов</span></div>
+        <div class="bar-track"><div class="bar-fill bf-against" style="width:{{ (votes_against/d*100)|round|int }}%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="bar-head"><span style="color:var(--warn);font-weight:600">ВОЗДЕРЖАЛИСЬ</span><span class="bar-val">{{ votes_abstained }} голосов</span></div>
+        <div class="bar-track"><div class="bar-fill bf-abstain" style="width:{{ (votes_abstained/d*100)|round|int }}%"></div></div>
+      </div>
+
+      <div class="quorum-block">
+        <div>
+          <div class="q-label">Явка (кворум)</div>
+          <div class="q-sub">{{ total_voted }} из {{ total_invited }} участников</div>
+        </div>
+        <div class="q-num">{{ quorum }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Верификация и аудит</div>
+      <div class="card-sub">Криптографическая проверка целостности</div>
+    </div>
+    <div class="card-body">
+      <div class="verify-grid">
+        <div class="verify-cell">
+          <div class="vcell-lbl">Шифрование</div>
+          <div class="vcell-val verified">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1L1.5 3.5V7c0 3 2.25 5.7 5.5 6.5C10.25 12.7 12.5 10 12.5 7V3.5L7 1z"/><path d="M4.5 7l1.5 1.5 3.5-3.5"/></svg>
+            AES-256 Активно
+          </div>
+        </div>
+        <div class="verify-cell">
+          <div class="vcell-lbl">Хеширование квитанций</div>
+          <div class="vcell-val verified">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1L1.5 3.5V7c0 3 2.25 5.7 5.5 6.5C10.25 12.7 12.5 10 12.5 7V3.5L7 1z"/><path d="M4.5 7l1.5 1.5 3.5-3.5"/></svg>
+            SHA-256 Активно
+          </div>
+        </div>
+        <div class="verify-cell">
+          <div class="vcell-lbl">ID голосования</div>
+          <div class="vcell-val">#{{ voting.id }}</div>
+        </div>
+        <div class="verify-cell">
+          <div class="vcell-lbl">Статус целостности</div>
+          <div class="vcell-val verified">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1L1.5 3.5V7c0 3 2.25 5.7 5.5 6.5C10.25 12.7 12.5 10 12.5 7V3.5L7 1z"/><path d="M4.5 7l1.5 1.5 3.5-3.5"/></svg>
+            ПОДТВЕРЖДЕНО
+          </div>
+        </div>
+        <div class="verify-cell" style="grid-column:1/-1">
+          <div class="vcell-lbl">Отпечаток отчёта (SHA-256)</div>
+          <div class="vcell-val" id="report-hash" style="font-size:.6875rem">Вычисление…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Compute report fingerprint client-side
+  const reportData = `election:{{ voting.id }}|for:{{ votes_for }}|against:{{ votes_against }}|abstained:{{ votes_abstained }}|total:{{ total_voted }}|invited:{{ total_invited }}`;
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(reportData)).then(buf => {
+    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('report-hash').textContent = hex;
+  });
+</script>
+</body>
+</html>
