@@ -3,12 +3,11 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.jino.ru")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "voting@jino.ru")
-SMTP_PASS = os.getenv("SMTP_PASS", "")
-
 def send_voting_link(email: str, voting_id: int, user_token: str, base_url: str):
+    SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.jino.ru")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER", "voting@jino.ru")
+    SMTP_PASS = os.getenv("SMTP_PASS", "")
     link = f"{base_url}/vote/{voting_id}/{user_token}"
     subject = "Приглашение к участию в голосовании"
 

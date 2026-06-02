@@ -2,6 +2,9 @@ import os
 import sqlite3
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
