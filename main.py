@@ -134,22 +134,27 @@ def launch_voting(
             raise HTTPException(400, "Нет участников для рассылки")
 
         base_url = str(request.base_url).rstrip("/")
-        sent, errors = 0, []
 
+        recipients = []
         for user in users:
             token = generate_token()
-            try:
-                conn.execute(
-                    "INSERT INTO voting_tokens (voting_id, user_id, token) VALUES (?, ?, ?)",
-                    (voting_id, user["id"], token),
-                )
-                send_voting_link(user["email"], voting_id, token, base_url)
-                sent += 1
-            except Exception as exc:
-                errors.append(f"{user['email']}: {exc}")
+            conn.execute(
+                "INSERT INTO voting_tokens (voting_id, user_id, token) VALUES (?, ?, ?)",
+                (voting_id, user["id"], token),
+            )
+            recipients.append((user["email"], token))
 
         conn.execute("UPDATE votings SET launched = 1 WHERE id = ?", (voting_id,))
         conn.commit()
+
+    # DB connection released — now send emails without holding the lock
+    sent, errors = 0, []
+    for email, token in recipients:
+        try:
+            send_voting_link(email, voting_id, token, base_url)
+            sent += 1
+        except Exception as exc:
+            errors.append(f"{email}: {exc}")
 
     result = {"status": "ok", "voting_id": voting_id, "sent": sent}
     if errors:
